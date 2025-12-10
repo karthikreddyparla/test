@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-white text-center">
+                <h3>Welcome to AI Lead Gen</h3>
+                <p class="text-muted">Find your next customer in seconds.</p>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('login') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username / Business Name</label>
+                        <input type="text" class="form-control" id="username" name="username" required placeholder="e.g. AcmeCorp">
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">Get Started</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <!-- Left Column: Input Form -->
+    <div class="col-md-4">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Generate Leads</h5>
+            </div>
+            <div class="card-body">
+                <form id="leadGenForm">
+                    <input type="hidden" id="user_id" value="{{ user.id }}">
+                    <div class="mb-3">
+                        <label for="industry" class="form-label">Target Industry</label>
+                        <input type="text" class="form-control" id="industry" required placeholder="e.g. Coffee Shops">
+                    </div>
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="location" required placeholder="e.g. New York, NY">
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success" id="generateBtn">
+                            <span id="btnText">Find Leads with AI</span>
+                            <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="mb-0">History</h5>
+            </div>
+            <ul class="list-group list-group-flush" id="historyList">
+                {% for search in searches %}
+                <li class="list-group-item d-flex justify-content-between align-items-center history-item" style="cursor: pointer;" onclick="loadLeads({{ search.id }})">
+                    <div>
+                        <strong>{{ search.industry }}</strong><br>
+                        <small class="text-muted">{{ search.location }}</small>
+                    </div>
+                    <span class="badge bg-secondary rounded-pill">View</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Right Column: Results -->
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Lead Results</h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="exportCSV()">Export CSV</button>
+            </div>
+            <div class="card-body">
+                <div id="resultsContainer">
+                    <p class="text-muted text-center py-5">Select a search from history or generate new leads to view results.</p>
+                </div>
+                <div class="table-responsive d-none" id="resultsTableWrapper">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Company</th>
+                                <th>Contact</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leadsTableBody">
+                            <!-- Leads will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function loadLeads(searchId) {
+        // Show loading state if needed
+        $('#resultsContainer').html('<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>');
+        $('#resultsTableWrapper').addClass('d-none');
+
+        $.get(`/api/leads/${searchId}`, function(data) {
+            $('#resultsContainer').empty(); // Clear placeholder/loader
+            $('#leadsTableBody').empty(); // Clear old data
+
+            if(data.length === 0) {
+                $('#resultsContainer').html('<p class="text-center py-5">No leads found.</p>');
+                return;
+            }
+
+            data.forEach(lead => {
+                const row = `
+                    <tr>
+                        <td>${lead.company}</td>
+                        <td>${lead.contact}</td>
+                        <td><a href="mailto:${lead.email}">${lead.email}</a></td>
+                        <td>${lead.phone}</td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar ${getScoreColor(lead.score)}" role="progressbar" style="width: ${lead.score}%" aria-valuenow="${lead.score}" aria-valuemin="0" aria-valuemax="100">${lead.score}</div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                $('#leadsTableBody').append(row);
+            });
+
+            $('#resultsTableWrapper').removeClass('d-none');
+        });
+    }
+
+    function getScoreColor(score) {
+        if(score >= 80) return 'bg-success';
+        if(score >= 60) return 'bg-info';
+        return 'bg-warning';
+    }
+
+    $('#leadGenForm').submit(function(e) {
+        e.preventDefault();
+        const userId = $('#user_id').val();
+        const industry = $('#industry').val();
+        const location = $('#location').val();
+
+        // UI Loading State
+        $('#generateBtn').prop('disabled', true);
+        $('#btnText').text('Generating...');
+        $('#btnSpinner').removeClass('d-none');
+
+        $.ajax({
+            url: '/api/generate_leads',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                user_id: userId,
+                industry: industry,
+                location: location
+            }),
+            success: function(response) {
+                // Add to history list (prepend)
+                const newItem = `
+                    <li class="list-group-item d-flex justify-content-between align-items-center history-item" style="cursor: pointer;" onclick="loadLeads(${response.search_id})">
+                        <div>
+                            <strong>${industry}</strong><br>
+                            <small class="text-muted">${location}</small>
+                        </div>
+                        <span class="badge bg-secondary rounded-pill">View</span>
+                    </li>
+                `;
+                $('#historyList').prepend(newItem);
+
+                // Automatically load the results
+                loadLeads(response.search_id);
+            },
+            complete: function() {
+                // Reset UI
+                $('#generateBtn').prop('disabled', false);
+                $('#btnText').text('Find Leads with AI');
+                $('#btnSpinner').addClass('d-none');
+            }
+        });
+    });
+
+    function exportCSV() {
+        alert("Export functionality coming soon!");
+    }
+</script>
+{% endblock %}
