@@ -2,94 +2,257 @@
 
 {% block content %}
 <div class="row">
-    <!-- Left Column: Input Form -->
-    <div class="col-md-4">
-        <div class="card shadow mb-4">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Generate Leads</h5>
-            </div>
-            <div class="card-body">
-                <form id="leadGenForm">
-                    <input type="hidden" id="user_id" value="{{ user.id }}">
-                    <div class="mb-3">
-                        <label for="industry" class="form-label">Target Industry</label>
-                        <input type="text" class="form-control" id="industry" required placeholder="e.g. Coffee Shops">
-                    </div>
-                    <div class="mb-3">
-                        <label for="location" class="form-label">Location</label>
-                        <input type="text" class="form-control" id="location" required placeholder="e.g. New York, NY">
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-success" id="generateBtn">
-                            <span id="btnText">Find Leads with AI</span>
-                            <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+    <div class="col-12 mb-3">
+        <ul class="nav nav-tabs" id="mainTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="leads-tab" data-bs-toggle="tab" data-bs-target="#leads" type="button" role="tab">Lead Generation</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="campaigns-tab" data-bs-toggle="tab" data-bs-target="#campaigns" type="button" role="tab">Campaigns</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button" role="tab">Analytics</button>
+            </li>
+        </ul>
+    </div>
+</div>
 
-        <div class="card shadow">
-            <div class="card-header">
-                <h5 class="mb-0">History</h5>
-            </div>
-            <ul class="list-group list-group-flush" id="historyList">
-                {% for search in searches %}
-                <li class="list-group-item d-flex justify-content-between align-items-center history-item" style="cursor: pointer;" onclick="loadLeads({{ search.id }})">
-                    <div>
-                        <strong>{{ search.industry }}</strong><br>
-                        <small class="text-muted">{{ search.location }}</small>
+<div class="tab-content" id="mainTabContent">
+    <!-- Leads Tab -->
+    <div class="tab-pane fade show active" id="leads" role="tabpanel">
+        <div class="row">
+            <div class="col-md-4">
+                <!-- Lead Gen Form -->
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Generate Leads</h5>
                     </div>
-                    <span class="badge bg-secondary rounded-pill">View</span>
-                </li>
-                {% endfor %}
-            </ul>
+                    <div class="card-body">
+                        <form id="leadGenForm">
+                            <input type="hidden" id="user_id" value="{{ user.id }}">
+                            <div class="mb-3">
+                                <label for="industry" class="form-label">Target Industry</label>
+                                <input type="text" class="form-control" id="industry" required placeholder="e.g. Coffee Shops">
+                            </div>
+                            <div class="mb-3">
+                                <label for="location" class="form-label">Location</label>
+                                <input type="text" class="form-control" id="location" required placeholder="e.g. New York, NY">
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-success" id="generateBtn">
+                                    <span id="btnText">Find Leads with AI</span>
+                                    <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- History -->
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h5 class="mb-0">History</h5>
+                    </div>
+                    <ul class="list-group list-group-flush" id="historyList">
+                        {% for search in searches %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center history-item" style="cursor: pointer;" onclick="loadLeads({{ search.id }})">
+                            <div>
+                                <strong>{{ search.industry }}</strong><br>
+                                <small class="text-muted">{{ search.location }}</small>
+                            </div>
+                            <span class="badge bg-secondary rounded-pill">View</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Lead Results</h5>
+                        <button class="btn btn-sm btn-outline-primary" onclick="exportCSV()">Export CSV</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="resultsContainer">
+                            <p class="text-muted text-center py-5">Select a search from history or generate new leads.</p>
+                        </div>
+                        <div class="table-responsive d-none" id="resultsTableWrapper">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Company</th>
+                                        <th>Score</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leadsTableBody">
+                                    <!-- Leads injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Right Column: Results -->
-    <div class="col-md-8">
-        <div class="card shadow">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Lead Results</h5>
-                <button class="btn btn-sm btn-outline-primary" onclick="exportCSV()">Export CSV</button>
-            </div>
-            <div class="card-body">
-                <div id="resultsContainer">
-                    <p class="text-muted text-center py-5">Select a search from history or generate new leads to view results.</p>
+    <!-- Campaigns Tab -->
+    <div class="tab-pane fade" id="campaigns" role="tabpanel">
+        <div class="row">
+            <div class="col-md-5">
+                <div class="card shadow">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Launch Campaign</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="campaignForm">
+                            <div class="mb-3">
+                                <label class="form-label">Campaign Name</label>
+                                <input type="text" class="form-control" id="campName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Platform</label>
+                                <select class="form-select" id="campPlatform">
+                                    <option value="Google">Google Ads</option>
+                                    <option value="Facebook">Facebook Ads</option>
+                                    <option value="LinkedIn">LinkedIn Ads</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Target Audience</label>
+                                <input type="text" class="form-control" id="campTarget" placeholder="e.g. Small Biz Owners in NY">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Budget ($)</label>
+                                <input type="number" class="form-control" id="campBudget" required min="10">
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-success">Launch Campaign</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-                <div class="table-responsive d-none" id="resultsTableWrapper">
-                    <table class="table table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Company</th>
-                                <th>Contact</th>
-                                <th>Email</th>
-                                <th>Phone</th>
-                                <th>Score</th>
-                            </tr>
-                        </thead>
-                        <tbody id="leadsTableBody">
-                            <!-- Leads will be injected here -->
-                        </tbody>
-                    </table>
+            </div>
+            <div class="col-md-7">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h5 class="mb-0">Active Campaigns</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="campaignList">
+                             {% for c in campaigns %}
+                             <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                                 <div>
+                                     <strong>{{ c.name }}</strong> ({{ c.platform }})<br>
+                                     <small class="text-muted">Status: {{ c.status }} | Budget: ${{ c.budget }}</small>
+                                 </div>
+                                 <button class="btn btn-sm btn-outline-info" onclick="viewAnalytics({{ c.id }}, '{{ c.name }}')">Stats</button>
+                             </div>
+                             {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Tab -->
+    <div class="tab-pane fade" id="analytics" role="tabpanel">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h5 class="mb-0" id="analyticsTitle">Campaign Performance</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="analyticsPlaceholder" class="text-center py-5">
+                            <p class="text-muted">Select a campaign from the Campaigns tab to view detailed analytics.</p>
+                        </div>
+                        <div id="analyticsContent" class="d-none">
+                            <div class="row text-center mb-4">
+                                <div class="col-md-3">
+                                    <div class="p-3 border rounded bg-light">
+                                        <h3 id="statImpressions">0</h3>
+                                        <small class="text-muted">Impressions</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-3 border rounded bg-light">
+                                        <h3 id="statClicks">0</h3>
+                                        <small class="text-muted">Clicks</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-3 border rounded bg-light">
+                                        <h3 id="statConversions">0</h3>
+                                        <small class="text-muted">Conversions</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-3 border rounded bg-light">
+                                        <h3 id="statCost">$0</h3>
+                                        <small class="text-muted">Cost</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Mock Chart Container -->
+                            <div class="border rounded p-4 text-center bg-light" style="height: 300px; display: flex; align-items: center; justify-content: center;">
+                                <p class="text-muted">Chart visualization would go here (requires Chart.js integration)</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Message Modal -->
+<div class="modal fade" id="messageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Send Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="msgLeadId">
+                <div class="mb-3">
+                    <label class="form-label">To: <span id="msgRecipientName" class="fw-bold"></span></label>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Channel</label>
+                    <select class="form-select" id="msgChannel">
+                        <option value="Email">Email</option>
+                        <option value="SMS">SMS</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Message</label>
+                    <textarea class="form-control" id="msgContent" rows="4"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
+    // --- Leads Logic ---
     function loadLeads(searchId) {
-        // Show loading state if needed
         $('#resultsContainer').html('<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>');
         $('#resultsTableWrapper').addClass('d-none');
 
         $.get(`/api/leads/${searchId}`, function(data) {
-            $('#resultsContainer').empty(); // Clear placeholder/loader
-            $('#leadsTableBody').empty(); // Clear old data
+            $('#resultsContainer').empty();
+            $('#leadsTableBody').empty();
 
             if(data.length === 0) {
                 $('#resultsContainer').html('<p class="text-center py-5">No leads found.</p>');
@@ -99,14 +262,17 @@
             data.forEach(lead => {
                 const row = `
                     <tr>
-                        <td>${lead.company}</td>
-                        <td>${lead.contact}</td>
-                        <td><a href="mailto:${lead.email}">${lead.email}</a></td>
-                        <td>${lead.phone}</td>
+                        <td>
+                            <strong>${lead.company}</strong><br>
+                            <small>${lead.contact}</small>
+                        </td>
                         <td>
                             <div class="progress" style="height: 20px;">
-                                <div class="progress-bar ${getScoreColor(lead.score)}" role="progressbar" style="width: ${lead.score}%" aria-valuenow="${lead.score}" aria-valuemin="0" aria-valuemax="100">${lead.score}</div>
+                                <div class="progress-bar ${getScoreColor(lead.score)}" role="progressbar" style="width: ${lead.score}%">${lead.score}</div>
                             </div>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="openMessageModal(${lead.id}, '${lead.contact}')">Message</button>
                         </td>
                     </tr>
                 `;
@@ -126,10 +292,7 @@
     $('#leadGenForm').submit(function(e) {
         e.preventDefault();
         const userId = $('#user_id').val();
-        const industry = $('#industry').val();
-        const location = $('#location').val();
 
-        // UI Loading State
         $('#generateBtn').prop('disabled', true);
         $('#btnText').text('Generating...');
         $('#btnSpinner').removeClass('d-none');
@@ -140,27 +303,23 @@
             contentType: 'application/json',
             data: JSON.stringify({
                 user_id: userId,
-                industry: industry,
-                location: location
+                industry: $('#industry').val(),
+                location: $('#location').val()
             }),
             success: function(response) {
-                // Add to history list (prepend)
                 const newItem = `
                     <li class="list-group-item d-flex justify-content-between align-items-center history-item" style="cursor: pointer;" onclick="loadLeads(${response.search_id})">
                         <div>
-                            <strong>${industry}</strong><br>
-                            <small class="text-muted">${location}</small>
+                            <strong>${$('#industry').val()}</strong><br>
+                            <small class="text-muted">${$('#location').val()}</small>
                         </div>
                         <span class="badge bg-secondary rounded-pill">View</span>
                     </li>
                 `;
                 $('#historyList').prepend(newItem);
-
-                // Automatically load the results
                 loadLeads(response.search_id);
             },
             complete: function() {
-                // Reset UI
                 $('#generateBtn').prop('disabled', false);
                 $('#btnText').text('Find Leads with AI');
                 $('#btnSpinner').addClass('d-none');
@@ -168,8 +327,80 @@
         });
     });
 
-    function exportCSV() {
-        alert("Export functionality coming soon!");
+    // --- Messaging Logic ---
+    var messageModal = new bootstrap.Modal(document.getElementById('messageModal'));
+
+    function openMessageModal(leadId, name) {
+        $('#msgLeadId').val(leadId);
+        $('#msgRecipientName').text(name);
+        $('#msgContent').val("Hi " + name + ", I noticed your business...");
+        messageModal.show();
+    }
+
+    function sendMessage() {
+        const userId = $('#user_id').val();
+        const leadId = $('#msgLeadId').val();
+        const channel = $('#msgChannel').val();
+        const content = $('#msgContent').val();
+
+        $.ajax({
+            url: '/api/messages/send',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                user_id: userId,
+                lead_id: leadId,
+                channel: channel,
+                content: content
+            }),
+            success: function(res) {
+                alert('Message sent successfully!');
+                messageModal.hide();
+            }
+        });
+    }
+
+    // --- Campaign Logic ---
+    $('#campaignForm').submit(function(e) {
+        e.preventDefault();
+        const userId = $('#user_id').val();
+
+        $.ajax({
+            url: '/api/campaigns/launch',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                user_id: userId,
+                name: $('#campName').val(),
+                platform: $('#campPlatform').val(),
+                target: $('#campTarget').val(),
+                budget: $('#campBudget').val()
+            }),
+            success: function(res) {
+                alert('Campaign Launched!');
+                location.reload(); // Simple reload to show in list
+            }
+        });
+    });
+
+    // --- Analytics Logic ---
+    function viewAnalytics(campaignId, name) {
+        // Switch to tab
+        var tabTrigger = new bootstrap.Tab(document.querySelector('#analytics-tab'));
+        tabTrigger.show();
+
+        $('#analyticsTitle').text('Performance: ' + name);
+        $('#analyticsPlaceholder').addClass('d-none');
+        $('#analyticsContent').addClass('d-none'); // Hide until loaded
+
+        $.get(`/api/analytics/${campaignId}`, function(data) {
+            $('#statImpressions').text(data.impressions);
+            $('#statClicks').text(data.clicks);
+            $('#statConversions').text(data.conversions);
+            $('#statCost').text('$' + data.cost);
+
+            $('#analyticsContent').removeClass('d-none');
+        });
     }
 </script>
 {% endblock %}
