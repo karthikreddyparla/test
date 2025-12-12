@@ -1,0 +1,9 @@
+.git/
+.gitignore
+__pycache__/
+instance/
+*.pyc
+*.log
+venv/
+env/
+/home/jules/verification/

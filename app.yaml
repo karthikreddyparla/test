@@ -1,0 +1,14 @@
+runtime: python312
+entrypoint: gunicorn -b :$PORT app:app
+
+env_variables:
+  LEAD_PROVIDER: "MOCK"
+  GAE_ENV: "standard"
+  # SECRET_KEY: "production-secret-here"
+
+handlers:
+- url: /static
+  static_dir: static
+
+- url: /.*
+  script: auto

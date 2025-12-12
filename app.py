@@ -6,11 +6,17 @@ from services.ad_service import AdService, AnalyticsService
 import os
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///leads.db'
+# Use /tmp for GAE compatibility (read-only filesystem), or local file otherwise
+db_path = os.path.join('/tmp', 'leads.db') if os.environ.get('GAE_ENV') else 'leads.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'secret-key-for-dev'
 
 db.init_app(app)
+
+# Ensure tables exist (Run once on startup)
+with app.app_context():
+    db.create_all()
 
 # Routes
 @app.route('/')
@@ -110,6 +116,4 @@ def get_analytics(campaign_id):
     })
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(debug=True, port=5000)
