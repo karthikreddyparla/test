@@ -84,6 +84,8 @@ You can configure the application using Environment Variables.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `LEAD_PROVIDER` | `MOCK` | Set to `EXTERNAL` to use the API provider skeleton. |
-| `LEAD_API_KEY` | `""` | API Key for external providers (if implemented). |
+| `LEAD_PROVIDER` | `MOCK` | Options: `MOCK`, `APOLLO`, `PDL`. |
+| `LEAD_API_KEY` | `""` | Generic API Key (fallback). |
+| `APOLLO_API_KEY` | `""` | Specific key for Apollo.io. |
+| `PDL_API_KEY` | `""` | Specific key for People Data Labs. |
 | `SECRET_KEY` | `secret...` | Flask Secret Key (Change this for production!). |
