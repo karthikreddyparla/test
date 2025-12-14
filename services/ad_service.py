@@ -1,4 +1,5 @@
 from models import db, Campaign, CampaignMetric
+from services.integration_service import IntegrationService
 import random
 import datetime
 
@@ -8,6 +9,10 @@ class AdService:
         """
         Simulates launching a campaign on an ad platform.
         """
+        # Verify Connection
+        if not IntegrationService.is_platform_connected(user_id, platform):
+            raise Exception(f"Account not connected to {platform}. Please link your account in Settings.")
+
         # Create Campaign Record
         campaign = Campaign(
             user_id=user_id,

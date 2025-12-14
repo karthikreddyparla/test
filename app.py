@@ -3,6 +3,7 @@ from models import db, User, LeadSearch, Lead, Campaign
 from services.lead_service import LeadService
 from services.messaging_service import MessagingService
 from services.ad_service import AdService, AnalyticsService
+from services.integration_service import IntegrationService
 import os
 
 app = Flask(__name__)
@@ -42,6 +43,22 @@ def dashboard(user_id):
     searches = LeadSearch.query.filter_by(user_id=user.id).order_by(LeadSearch.timestamp.desc()).all()
     campaigns = Campaign.query.filter_by(user_id=user.id).order_by(Campaign.created_at.desc()).all()
     return render_template('dashboard.html', user=user, searches=searches, campaigns=campaigns)
+
+@app.route('/integrations/<int:user_id>')
+def integrations(user_id):
+    user = User.query.get_or_404(user_id)
+    accounts = IntegrationService.get_user_integrations(user_id)
+    return render_template('integrations.html', user=user, accounts=accounts)
+
+@app.route('/api/integrations/toggle', methods=['POST'])
+def toggle_integration():
+    data = request.json
+    result = IntegrationService.toggle_integration(
+        user_id=data.get('user_id'),
+        platform=data.get('platform'),
+        action=data.get('action')
+    )
+    return jsonify(result)
 
 @app.route('/api/generate_leads', methods=['POST'])
 def generate_leads():
@@ -88,18 +105,21 @@ def send_message():
 @app.route('/api/campaigns/launch', methods=['POST'])
 def launch_campaign():
     data = request.json
-    campaign = AdService.launch_campaign(
-        user_id=data.get('user_id'),
-        name=data.get('name'),
-        platform=data.get('platform'),
-        budget=data.get('budget'),
-        target_audience=data.get('target')
-    )
-    return jsonify({
-        'success': True,
-        'campaign_id': campaign.id,
-        'status': campaign.status
-    })
+    try:
+        campaign = AdService.launch_campaign(
+            user_id=data.get('user_id'),
+            name=data.get('name'),
+            platform=data.get('platform'),
+            budget=data.get('budget'),
+            target_audience=data.get('target')
+        )
+        return jsonify({
+            'success': True,
+            'campaign_id': campaign.id,
+            'status': campaign.status
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
 
 @app.route('/api/analytics/<int:campaign_id>')
 def get_analytics(campaign_id):

@@ -8,6 +8,15 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(80), nullable=False)
     campaigns = db.relationship('Campaign', backref='owner', lazy=True)
+    ad_accounts = db.relationship('AdAccount', backref='owner', lazy=True)
+
+class AdAccount(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    platform = db.Column(db.String(50), nullable=False) # Google, Facebook, LinkedIn
+    access_token = db.Column(db.String(255)) # Encrypted token in real app
+    is_connected = db.Column(db.Boolean, default=False)
+    last_connected_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class LeadSearch(db.Model):
     id = db.Column(db.Integer, primary_key=True)
